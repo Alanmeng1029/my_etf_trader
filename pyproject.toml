@@ -1,0 +1,69 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "my_etf"
+version = "1.0.0"
+description = "ETF量化交易系统 - 数据获取、技术分析、机器学习预测和策略回测"
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "MIT"}
+authors = [
+    {name = "Your Name", email = "your.email@example.com"}
+]
+keywords = ["etf", "quant", "trading", "backtest", "xgboost"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Financial and Insurance Industry",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Office/Business :: Financial :: Investment",
+]
+
+dependencies = [
+    "akshare>=1.11.0",
+    "pandas>=2.0.0",
+    "numpy>=1.24.0",
+    "xgboost>=2.0.0",
+    "scikit-learn>=1.3.0",
+    "python-dotenv>=1.0.0",
+    "joblib>=1.3.0",
+    "requests>=2.31.0",
+    "urllib3>=2.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "black>=23.0.0",
+    "flake8>=6.0.0",
+    "mypy>=1.0.0",
+]
+
+[project.scripts]
+my_etf-fetch = "my_etf.workflows.fetch_workflow:main"
+my_etf-predict = "my_etf.workflows.predict_workflow:main"
+my_etf-backtest = "my_etf.workflows.backtest_workflow:main"
+my_etf-full = "my_etf.workflows.full_workflow:main"
+my_etf-recommend = "my_etf.workflows.recommend_workflow:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.black]
+line-length = 100
+target-version = ['py39', 'py310', 'py311']
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]

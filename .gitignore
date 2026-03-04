@@ -1,0 +1,48 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# 环境变量
+.env
+
+# 数据和模型（但保留数据库文件）
+models/*/*.pkl
+models/*/*.json
+
+# 日志
+*.log
+
+# IDE
+.vscode/
+.idea/
+
+# 系统文件
+.DS_Store
+Thumbs.db
+nul
+
+# 生成的报告文件
+reports/
+recommendations/
+index_summary/
+*.txt
+
+# 生成的数据文件（除了数据库）
+data/*/*.csv
+data/*/*.html
+data/etf_report.html
+data/summary/
+etf_summary.html
+
+# 临时文件
+train_errors.txt
+train_output.txt
+generate_etf_report.py
+generate_etf_summary.py
+view_db.py
+
+# Python 包构建文件
+src/my_etf.egg-info/
