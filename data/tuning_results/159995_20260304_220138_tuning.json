@@ -1,0 +1,1028 @@
+[
+  {
+    "rank": 1,
+    "params": {
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "objective": "multi:softprob",
+      "eval_metric": [
+        "mlogloss",
+        "merror"
+      ],
+      "num_class": 4,
+      "random_state": 42,
+      "n_estimators": 100,
+      "max_depth": 6,
+      "learning_rate": 0.2,
+      "min_child_weight": 3
+    },
+    "accuracy": 0.4581497797356828
+  },
+  {
+    "rank": 2,
+    "params": {
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "objective": "multi:softprob",
+      "eval_metric": [
+        "mlogloss",
+        "merror"
+      ],
+      "num_class": 4,
+      "random_state": 42,
+      "n_estimators": 200,
+      "max_depth": 6,
+      "learning_rate": 0.2,
+      "min_child_weight": 3
+    },
+    "accuracy": 0.44933920704845814
+  },
+  {
+    "rank": 3,
+    "params": {
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "objective": "multi:softprob",
+      "eval_metric": [
+        "mlogloss",
+        "merror"
+      ],
+      "num_class": 4,
+      "random_state": 42,
+      "n_estimators": 100,
+      "max_depth": 6,
+      "learning_rate": 0.05,
+      "min_child_weight": 3
+    },
+    "accuracy": 0.44493392070484583
+  },
+  {
+    "rank": 4,
+    "params": {
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "objective": "multi:softprob",
+      "eval_metric": [
+        "mlogloss",
+        "merror"
+      ],
+      "num_class": 4,
+      "random_state": 42,
+      "n_estimators": 200,
+      "max_depth": 6,
+      "learning_rate": 0.05,
+      "min_child_weight": 3
+    },
+    "accuracy": 0.44493392070484583
+  },
+  {
+    "rank": 5,
+    "params": {
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "objective": "multi:softprob",
+      "eval_metric": [
+        "mlogloss",
+        "merror"
+      ],
+      "num_class": 4,
+      "random_state": 42,
+      "n_estimators": 200,
+      "max_depth": 6,
+      "learning_rate": 0.05,
+      "min_child_weight": 5
+    },
+    "accuracy": 0.44052863436123346
+  },
+  {
+    "rank": 6,
+    "params": {
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "objective": "multi:softprob",
+      "eval_metric": [
+        "mlogloss",
+        "merror"
+      ],
+      "num_class": 4,
+      "random_state": 42,
+      "n_estimators": 100,
+      "max_depth": 4,
+      "learning_rate": 0.1,
+      "min_child_weight": 1
+    },
+    "accuracy": 0.43612334801762115
+  },
+  {
+    "rank": 7,
+    "params": {
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "objective": "multi:softprob",
+      "eval_metric": [
+        "mlogloss",
+        "merror"
+      ],
+      "num_class": 4,
+      "random_state": 42,
+      "n_estimators": 100,
+      "max_depth": 6,
+      "learning_rate": 0.05,
+      "min_child_weight": 5
+    },
+    "accuracy": 0.43612334801762115
+  },
+  {
+    "rank": 8,
+    "params": {
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "objective": "multi:softprob",
+      "eval_metric": [
+        "mlogloss",
+        "merror"
+      ],
+      "num_class": 4,
+      "random_state": 42,
+      "n_estimators": 200,
+      "max_depth": 8,
+      "learning_rate": 0.05,
+      "min_child_weight": 5
+    },
+    "accuracy": 0.43612334801762115
+  },
+  {
+    "rank": 9,
+    "params": {
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "objective": "multi:softprob",
+      "eval_metric": [
+        "mlogloss",
+        "merror"
+      ],
+      "num_class": 4,
+      "random_state": 42,
+      "n_estimators": 200,
+      "max_depth": 8,
+      "learning_rate": 0.1,
+      "min_child_weight": 3
+    },
+    "accuracy": 0.43612334801762115
+  },
+  {
+    "rank": 10,
+    "params": {
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "objective": "multi:softprob",
+      "eval_metric": [
+        "mlogloss",
+        "merror"
+      ],
+      "num_class": 4,
+      "random_state": 42,
+      "n_estimators": 100,
+      "max_depth": 4,
+      "learning_rate": 0.05,
+      "min_child_weight": 1
+    },
+    "accuracy": 0.43171806167400884
+  },
+  {
+    "rank": 11,
+    "params": {
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "objective": "multi:softprob",
+      "eval_metric": [
+        "mlogloss",
+        "merror"
+      ],
+      "num_class": 4,
+      "random_state": 42,
+      "n_estimators": 100,
+      "max_depth": 6,
+      "learning_rate": 0.1,
+      "min_child_weight": 5
+    },
+    "accuracy": 0.43171806167400884
+  },
+  {
+    "rank": 12,
+    "params": {
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "objective": "multi:softprob",
+      "eval_metric": [
+        "mlogloss",
+        "merror"
+      ],
+      "num_class": 4,
+      "random_state": 42,
+      "n_estimators": 100,
+      "max_depth": 8,
+      "learning_rate": 0.1,
+      "min_child_weight": 3
+    },
+    "accuracy": 0.43171806167400884
+  },
+  {
+    "rank": 13,
+    "params": {
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "objective": "multi:softprob",
+      "eval_metric": [
+        "mlogloss",
+        "merror"
+      ],
+      "num_class": 4,
+      "random_state": 42,
+      "n_estimators": 200,
+      "max_depth": 6,
+      "learning_rate": 0.1,
+      "min_child_weight": 3
+    },
+    "accuracy": 0.43171806167400884
+  },
+  {
+    "rank": 14,
+    "params": {
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "objective": "multi:softprob",
+      "eval_metric": [
+        "mlogloss",
+        "merror"
+      ],
+      "num_class": 4,
+      "random_state": 42,
+      "n_estimators": 200,
+      "max_depth": 6,
+      "learning_rate": 0.1,
+      "min_child_weight": 5
+    },
+    "accuracy": 0.43171806167400884
+  },
+  {
+    "rank": 15,
+    "params": {
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "objective": "multi:softprob",
+      "eval_metric": [
+        "mlogloss",
+        "merror"
+      ],
+      "num_class": 4,
+      "random_state": 42,
+      "n_estimators": 200,
+      "max_depth": 6,
+      "learning_rate": 0.2,
+      "min_child_weight": 1
+    },
+    "accuracy": 0.43171806167400884
+  },
+  {
+    "rank": 16,
+    "params": {
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "objective": "multi:softprob",
+      "eval_metric": [
+        "mlogloss",
+        "merror"
+      ],
+      "num_class": 4,
+      "random_state": 42,
+      "n_estimators": 200,
+      "max_depth": 8,
+      "learning_rate": 0.05,
+      "min_child_weight": 3
+    },
+    "accuracy": 0.43171806167400884
+  },
+  {
+    "rank": 17,
+    "params": {
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "objective": "multi:softprob",
+      "eval_metric": [
+        "mlogloss",
+        "merror"
+      ],
+      "num_class": 4,
+      "random_state": 42,
+      "n_estimators": 200,
+      "max_depth": 8,
+      "learning_rate": 0.2,
+      "min_child_weight": 3
+    },
+    "accuracy": 0.43171806167400884
+  },
+  {
+    "rank": 18,
+    "params": {
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "objective": "multi:softprob",
+      "eval_metric": [
+        "mlogloss",
+        "merror"
+      ],
+      "num_class": 4,
+      "random_state": 42,
+      "n_estimators": 200,
+      "max_depth": 4,
+      "learning_rate": 0.05,
+      "min_child_weight": 1
+    },
+    "accuracy": 0.42731277533039647
+  },
+  {
+    "rank": 19,
+    "params": {
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "objective": "multi:softprob",
+      "eval_metric": [
+        "mlogloss",
+        "merror"
+      ],
+      "num_class": 4,
+      "random_state": 42,
+      "n_estimators": 100,
+      "max_depth": 4,
+      "learning_rate": 0.1,
+      "min_child_weight": 5
+    },
+    "accuracy": 0.42290748898678415
+  },
+  {
+    "rank": 20,
+    "params": {
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "objective": "multi:softprob",
+      "eval_metric": [
+        "mlogloss",
+        "merror"
+      ],
+      "num_class": 4,
+      "random_state": 42,
+      "n_estimators": 100,
+      "max_depth": 6,
+      "learning_rate": 0.1,
+      "min_child_weight": 1
+    },
+    "accuracy": 0.42290748898678415
+  },
+  {
+    "rank": 21,
+    "params": {
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "objective": "multi:softprob",
+      "eval_metric": [
+        "mlogloss",
+        "merror"
+      ],
+      "num_class": 4,
+      "random_state": 42,
+      "n_estimators": 100,
+      "max_depth": 6,
+      "learning_rate": 0.1,
+      "min_child_weight": 3
+    },
+    "accuracy": 0.42290748898678415
+  },
+  {
+    "rank": 22,
+    "params": {
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "objective": "multi:softprob",
+      "eval_metric": [
+        "mlogloss",
+        "merror"
+      ],
+      "num_class": 4,
+      "random_state": 42,
+      "n_estimators": 100,
+      "max_depth": 6,
+      "learning_rate": 0.2,
+      "min_child_weight": 1
+    },
+    "accuracy": 0.42290748898678415
+  },
+  {
+    "rank": 23,
+    "params": {
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "objective": "multi:softprob",
+      "eval_metric": [
+        "mlogloss",
+        "merror"
+      ],
+      "num_class": 4,
+      "random_state": 42,
+      "n_estimators": 200,
+      "max_depth": 6,
+      "learning_rate": 0.05,
+      "min_child_weight": 1
+    },
+    "accuracy": 0.42290748898678415
+  },
+  {
+    "rank": 24,
+    "params": {
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "objective": "multi:softprob",
+      "eval_metric": [
+        "mlogloss",
+        "merror"
+      ],
+      "num_class": 4,
+      "random_state": 42,
+      "n_estimators": 200,
+      "max_depth": 6,
+      "learning_rate": 0.2,
+      "min_child_weight": 5
+    },
+    "accuracy": 0.42290748898678415
+  },
+  {
+    "rank": 25,
+    "params": {
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "objective": "multi:softprob",
+      "eval_metric": [
+        "mlogloss",
+        "merror"
+      ],
+      "num_class": 4,
+      "random_state": 42,
+      "n_estimators": 100,
+      "max_depth": 4,
+      "learning_rate": 0.05,
+      "min_child_weight": 5
+    },
+    "accuracy": 0.4185022026431718
+  },
+  {
+    "rank": 26,
+    "params": {
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "objective": "multi:softprob",
+      "eval_metric": [
+        "mlogloss",
+        "merror"
+      ],
+      "num_class": 4,
+      "random_state": 42,
+      "n_estimators": 100,
+      "max_depth": 4,
+      "learning_rate": 0.2,
+      "min_child_weight": 1
+    },
+    "accuracy": 0.4185022026431718
+  },
+  {
+    "rank": 27,
+    "params": {
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "objective": "multi:softprob",
+      "eval_metric": [
+        "mlogloss",
+        "merror"
+      ],
+      "num_class": 4,
+      "random_state": 42,
+      "n_estimators": 100,
+      "max_depth": 8,
+      "learning_rate": 0.05,
+      "min_child_weight": 3
+    },
+    "accuracy": 0.4185022026431718
+  },
+  {
+    "rank": 28,
+    "params": {
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "objective": "multi:softprob",
+      "eval_metric": [
+        "mlogloss",
+        "merror"
+      ],
+      "num_class": 4,
+      "random_state": 42,
+      "n_estimators": 100,
+      "max_depth": 8,
+      "learning_rate": 0.1,
+      "min_child_weight": 1
+    },
+    "accuracy": 0.4185022026431718
+  },
+  {
+    "rank": 29,
+    "params": {
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "objective": "multi:softprob",
+      "eval_metric": [
+        "mlogloss",
+        "merror"
+      ],
+      "num_class": 4,
+      "random_state": 42,
+      "n_estimators": 200,
+      "max_depth": 4,
+      "learning_rate": 0.05,
+      "min_child_weight": 3
+    },
+    "accuracy": 0.4185022026431718
+  },
+  {
+    "rank": 30,
+    "params": {
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "objective": "multi:softprob",
+      "eval_metric": [
+        "mlogloss",
+        "merror"
+      ],
+      "num_class": 4,
+      "random_state": 42,
+      "n_estimators": 200,
+      "max_depth": 4,
+      "learning_rate": 0.05,
+      "min_child_weight": 5
+    },
+    "accuracy": 0.4185022026431718
+  },
+  {
+    "rank": 31,
+    "params": {
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "objective": "multi:softprob",
+      "eval_metric": [
+        "mlogloss",
+        "merror"
+      ],
+      "num_class": 4,
+      "random_state": 42,
+      "n_estimators": 200,
+      "max_depth": 8,
+      "learning_rate": 0.1,
+      "min_child_weight": 1
+    },
+    "accuracy": 0.4185022026431718
+  },
+  {
+    "rank": 32,
+    "params": {
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "objective": "multi:softprob",
+      "eval_metric": [
+        "mlogloss",
+        "merror"
+      ],
+      "num_class": 4,
+      "random_state": 42,
+      "n_estimators": 100,
+      "max_depth": 6,
+      "learning_rate": 0.05,
+      "min_child_weight": 1
+    },
+    "accuracy": 0.41409691629955947
+  },
+  {
+    "rank": 33,
+    "params": {
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "objective": "multi:softprob",
+      "eval_metric": [
+        "mlogloss",
+        "merror"
+      ],
+      "num_class": 4,
+      "random_state": 42,
+      "n_estimators": 100,
+      "max_depth": 8,
+      "learning_rate": 0.2,
+      "min_child_weight": 3
+    },
+    "accuracy": 0.41409691629955947
+  },
+  {
+    "rank": 34,
+    "params": {
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "objective": "multi:softprob",
+      "eval_metric": [
+        "mlogloss",
+        "merror"
+      ],
+      "num_class": 4,
+      "random_state": 42,
+      "n_estimators": 200,
+      "max_depth": 8,
+      "learning_rate": 0.05,
+      "min_child_weight": 1
+    },
+    "accuracy": 0.41409691629955947
+  },
+  {
+    "rank": 35,
+    "params": {
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "objective": "multi:softprob",
+      "eval_metric": [
+        "mlogloss",
+        "merror"
+      ],
+      "num_class": 4,
+      "random_state": 42,
+      "n_estimators": 200,
+      "max_depth": 8,
+      "learning_rate": 0.2,
+      "min_child_weight": 5
+    },
+    "accuracy": 0.41409691629955947
+  },
+  {
+    "rank": 36,
+    "params": {
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "objective": "multi:softprob",
+      "eval_metric": [
+        "mlogloss",
+        "merror"
+      ],
+      "num_class": 4,
+      "random_state": 42,
+      "n_estimators": 100,
+      "max_depth": 4,
+      "learning_rate": 0.05,
+      "min_child_weight": 3
+    },
+    "accuracy": 0.40969162995594716
+  },
+  {
+    "rank": 37,
+    "params": {
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "objective": "multi:softprob",
+      "eval_metric": [
+        "mlogloss",
+        "merror"
+      ],
+      "num_class": 4,
+      "random_state": 42,
+      "n_estimators": 100,
+      "max_depth": 4,
+      "learning_rate": 0.1,
+      "min_child_weight": 3
+    },
+    "accuracy": 0.40969162995594716
+  },
+  {
+    "rank": 38,
+    "params": {
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "objective": "multi:softprob",
+      "eval_metric": [
+        "mlogloss",
+        "merror"
+      ],
+      "num_class": 4,
+      "random_state": 42,
+      "n_estimators": 100,
+      "max_depth": 8,
+      "learning_rate": 0.05,
+      "min_child_weight": 5
+    },
+    "accuracy": 0.40969162995594716
+  },
+  {
+    "rank": 39,
+    "params": {
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "objective": "multi:softprob",
+      "eval_metric": [
+        "mlogloss",
+        "merror"
+      ],
+      "num_class": 4,
+      "random_state": 42,
+      "n_estimators": 100,
+      "max_depth": 8,
+      "learning_rate": 0.2,
+      "min_child_weight": 5
+    },
+    "accuracy": 0.40969162995594716
+  },
+  {
+    "rank": 40,
+    "params": {
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "objective": "multi:softprob",
+      "eval_metric": [
+        "mlogloss",
+        "merror"
+      ],
+      "num_class": 4,
+      "random_state": 42,
+      "n_estimators": 200,
+      "max_depth": 4,
+      "learning_rate": 0.1,
+      "min_child_weight": 3
+    },
+    "accuracy": 0.40969162995594716
+  },
+  {
+    "rank": 41,
+    "params": {
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "objective": "multi:softprob",
+      "eval_metric": [
+        "mlogloss",
+        "merror"
+      ],
+      "num_class": 4,
+      "random_state": 42,
+      "n_estimators": 200,
+      "max_depth": 4,
+      "learning_rate": 0.2,
+      "min_child_weight": 1
+    },
+    "accuracy": 0.40969162995594716
+  },
+  {
+    "rank": 42,
+    "params": {
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "objective": "multi:softprob",
+      "eval_metric": [
+        "mlogloss",
+        "merror"
+      ],
+      "num_class": 4,
+      "random_state": 42,
+      "n_estimators": 200,
+      "max_depth": 8,
+      "learning_rate": 0.2,
+      "min_child_weight": 1
+    },
+    "accuracy": 0.40969162995594716
+  },
+  {
+    "rank": 43,
+    "params": {
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "objective": "multi:softprob",
+      "eval_metric": [
+        "mlogloss",
+        "merror"
+      ],
+      "num_class": 4,
+      "random_state": 42,
+      "n_estimators": 100,
+      "max_depth": 6,
+      "learning_rate": 0.2,
+      "min_child_weight": 5
+    },
+    "accuracy": 0.4052863436123348
+  },
+  {
+    "rank": 44,
+    "params": {
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "objective": "multi:softprob",
+      "eval_metric": [
+        "mlogloss",
+        "merror"
+      ],
+      "num_class": 4,
+      "random_state": 42,
+      "n_estimators": 100,
+      "max_depth": 8,
+      "learning_rate": 0.05,
+      "min_child_weight": 1
+    },
+    "accuracy": 0.4052863436123348
+  },
+  {
+    "rank": 45,
+    "params": {
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "objective": "multi:softprob",
+      "eval_metric": [
+        "mlogloss",
+        "merror"
+      ],
+      "num_class": 4,
+      "random_state": 42,
+      "n_estimators": 100,
+      "max_depth": 8,
+      "learning_rate": 0.2,
+      "min_child_weight": 1
+    },
+    "accuracy": 0.4052863436123348
+  },
+  {
+    "rank": 46,
+    "params": {
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "objective": "multi:softprob",
+      "eval_metric": [
+        "mlogloss",
+        "merror"
+      ],
+      "num_class": 4,
+      "random_state": 42,
+      "n_estimators": 200,
+      "max_depth": 4,
+      "learning_rate": 0.1,
+      "min_child_weight": 5
+    },
+    "accuracy": 0.4052863436123348
+  },
+  {
+    "rank": 47,
+    "params": {
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "objective": "multi:softprob",
+      "eval_metric": [
+        "mlogloss",
+        "merror"
+      ],
+      "num_class": 4,
+      "random_state": 42,
+      "n_estimators": 200,
+      "max_depth": 6,
+      "learning_rate": 0.1,
+      "min_child_weight": 1
+    },
+    "accuracy": 0.4052863436123348
+  },
+  {
+    "rank": 48,
+    "params": {
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "objective": "multi:softprob",
+      "eval_metric": [
+        "mlogloss",
+        "merror"
+      ],
+      "num_class": 4,
+      "random_state": 42,
+      "n_estimators": 200,
+      "max_depth": 4,
+      "learning_rate": 0.2,
+      "min_child_weight": 3
+    },
+    "accuracy": 0.3964757709251101
+  },
+  {
+    "rank": 49,
+    "params": {
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "objective": "multi:softprob",
+      "eval_metric": [
+        "mlogloss",
+        "merror"
+      ],
+      "num_class": 4,
+      "random_state": 42,
+      "n_estimators": 100,
+      "max_depth": 8,
+      "learning_rate": 0.1,
+      "min_child_weight": 5
+    },
+    "accuracy": 0.3920704845814978
+  },
+  {
+    "rank": 50,
+    "params": {
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "objective": "multi:softprob",
+      "eval_metric": [
+        "mlogloss",
+        "merror"
+      ],
+      "num_class": 4,
+      "random_state": 42,
+      "n_estimators": 200,
+      "max_depth": 4,
+      "learning_rate": 0.1,
+      "min_child_weight": 1
+    },
+    "accuracy": 0.3920704845814978
+  },
+  {
+    "rank": 51,
+    "params": {
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "objective": "multi:softprob",
+      "eval_metric": [
+        "mlogloss",
+        "merror"
+      ],
+      "num_class": 4,
+      "random_state": 42,
+      "n_estimators": 100,
+      "max_depth": 4,
+      "learning_rate": 0.2,
+      "min_child_weight": 5
+    },
+    "accuracy": 0.3832599118942731
+  },
+  {
+    "rank": 52,
+    "params": {
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "objective": "multi:softprob",
+      "eval_metric": [
+        "mlogloss",
+        "merror"
+      ],
+      "num_class": 4,
+      "random_state": 42,
+      "n_estimators": 200,
+      "max_depth": 4,
+      "learning_rate": 0.2,
+      "min_child_weight": 5
+    },
+    "accuracy": 0.3788546255506608
+  },
+  {
+    "rank": 53,
+    "params": {
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "objective": "multi:softprob",
+      "eval_metric": [
+        "mlogloss",
+        "merror"
+      ],
+      "num_class": 4,
+      "random_state": 42,
+      "n_estimators": 200,
+      "max_depth": 8,
+      "learning_rate": 0.1,
+      "min_child_weight": 5
+    },
+    "accuracy": 0.3788546255506608
+  },
+  {
+    "rank": 54,
+    "params": {
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "objective": "multi:softprob",
+      "eval_metric": [
+        "mlogloss",
+        "merror"
+      ],
+      "num_class": 4,
+      "random_state": 42,
+      "n_estimators": 100,
+      "max_depth": 4,
+      "learning_rate": 0.2,
+      "min_child_weight": 3
+    },
+    "accuracy": 0.3700440528634361
+  }
+]

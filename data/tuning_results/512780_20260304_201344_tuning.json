@@ -1,0 +1,146 @@
+[
+  {
+    "rank": 1,
+    "params": {
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "objective": "multi:softprob",
+      "eval_metric": [
+        "mlogloss",
+        "merror"
+      ],
+      "num_class": 4,
+      "random_state": 42,
+      "n_estimators": 200,
+      "max_depth": 4,
+      "learning_rate": 0.1
+    },
+    "accuracy": 0.43427620632279534
+  },
+  {
+    "rank": 2,
+    "params": {
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "objective": "multi:softprob",
+      "eval_metric": [
+        "mlogloss",
+        "merror"
+      ],
+      "num_class": 4,
+      "random_state": 42,
+      "n_estimators": 200,
+      "max_depth": 6,
+      "learning_rate": 0.1
+    },
+    "accuracy": 0.4292845257903494
+  },
+  {
+    "rank": 3,
+    "params": {
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "objective": "multi:softprob",
+      "eval_metric": [
+        "mlogloss",
+        "merror"
+      ],
+      "num_class": 4,
+      "random_state": 42,
+      "n_estimators": 200,
+      "max_depth": 4,
+      "learning_rate": 0.2
+    },
+    "accuracy": 0.4276206322795341
+  },
+  {
+    "rank": 4,
+    "params": {
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "objective": "multi:softprob",
+      "eval_metric": [
+        "mlogloss",
+        "merror"
+      ],
+      "num_class": 4,
+      "random_state": 42,
+      "n_estimators": 200,
+      "max_depth": 6,
+      "learning_rate": 0.2
+    },
+    "accuracy": 0.4259567387687188
+  },
+  {
+    "rank": 5,
+    "params": {
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "objective": "multi:softprob",
+      "eval_metric": [
+        "mlogloss",
+        "merror"
+      ],
+      "num_class": 4,
+      "random_state": 42,
+      "n_estimators": 100,
+      "max_depth": 4,
+      "learning_rate": 0.1
+    },
+    "accuracy": 0.4193011647254576
+  },
+  {
+    "rank": 6,
+    "params": {
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "objective": "multi:softprob",
+      "eval_metric": [
+        "mlogloss",
+        "merror"
+      ],
+      "num_class": 4,
+      "random_state": 42,
+      "n_estimators": 100,
+      "max_depth": 6,
+      "learning_rate": 0.1
+    },
+    "accuracy": 0.4176372712146423
+  },
+  {
+    "rank": 7,
+    "params": {
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "objective": "multi:softprob",
+      "eval_metric": [
+        "mlogloss",
+        "merror"
+      ],
+      "num_class": 4,
+      "random_state": 42,
+      "n_estimators": 100,
+      "max_depth": 4,
+      "learning_rate": 0.2
+    },
+    "accuracy": 0.41430948419301167
+  },
+  {
+    "rank": 8,
+    "params": {
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "objective": "multi:softprob",
+      "eval_metric": [
+        "mlogloss",
+        "merror"
+      ],
+      "num_class": 4,
+      "random_state": 42,
+      "n_estimators": 100,
+      "max_depth": 6,
+      "learning_rate": 0.2
+    },
+    "accuracy": 0.40931780366056575
+  }
+]

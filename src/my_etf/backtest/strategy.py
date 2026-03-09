@@ -75,7 +75,8 @@ def load_etf_names(names_file: str) -> Dict[str, str]:
 
 def load_latest_predictions(data_dir: str = DATA_DIR,
                           backtest_start_date: str = '2025-01-01',
-                          model_type: str = 'separate') -> pd.DataFrame:
+                          model_type: str = 'separate',
+                          use_validation: bool = False) -> pd.DataFrame:
     """
     加载所有ETF的最新预测数据，并过滤：
     1. 只保留预测日期 >= backtest_start_date 的预测
@@ -84,7 +85,8 @@ def load_latest_predictions(data_dir: str = DATA_DIR,
     Args:
         data_dir: 数据目录
         backtest_start_date: 回测起始日期
-        model_type: 模型类型 ('separate', 'unified', 或 'classification')
+        model_type: 模型类型 ('separate', 'unified', 'classification', 'classification_validation')
+        use_validation: 是否使用验证集模型（仅用于classification）
 
     Returns:
         回归模型: DataFrame with columns: date, code, actual_return, predicted_return
@@ -99,7 +101,16 @@ def load_latest_predictions(data_dir: str = DATA_DIR,
             if model_type == 'separate':
                 csv_files = sorted(etf_dir.glob(f"{etf_dir.name}_{etf_dir.name}_*_separate.csv"))
             elif model_type == 'classification':
-                csv_files = sorted(etf_dir.glob(f"{etf_dir.name}_*_classification.csv"))
+                # 根据use_validation决定使用哪种模型
+                if use_validation:
+                    csv_files = sorted(etf_dir.glob(f"{etf_dir.name}_{etf_dir.name}_*_validation_classification.csv"))
+                else:
+                    csv_files = sorted(etf_dir.glob(f"{etf_dir.name}_{etf_dir.name}_*_classification.csv"))
+                    # 排除validation文件
+                    csv_files = [f for f in csv_files if 'validation' not in f.name]
+            elif model_type == 'classification_validation':
+                # 明确使用验证集模型
+                csv_files = sorted(etf_dir.glob(f"{etf_dir.name}_{etf_dir.name}_*_validation_classification.csv"))
             else:  # unified
                 csv_files = sorted(etf_dir.glob(f"{etf_dir.name}_*_unified.csv"))
 
@@ -1834,21 +1845,27 @@ def main():
                         help='使用分类模型进行回测')
     parser.add_argument('--with-cash-hedge', action='store_true',
                         help='使用分类模型进行带现金对冲的回测')
+    parser.add_argument('--use-validation', action='store_true',
+                        help='使用验证集模型进行分类回测（仅当--classification时有效）')
     args = parser.parse_args()
 
     # 确定回测哪些模型
     if args.classification:
         if args.with_cash_hedge:
-            model_types = ['classification_cash_hedge']
+            # 使用验证集模型（如果指定）
+            model_type_str = 'classification_validation' if args.use_validation else 'classification'
+            model_types = [f'{model_type_str}_cash_hedge']
             print("=" * 80)
-            print("ETF分类模型策略回测（带现金对冲）")
+            print(f"ETF分类模型策略回测（带现金对冲）- {'使用验证集模型' if args.use_validation else '使用普通模型'}")
             print("=" * 80)
             print(f"现金对冲ETF: 510500 (中证500)")
             print(f"对冲条件: 预测类别0 (大幅下跌 <-5%)")
         else:
-            model_types = ['classification']
+            # 使用验证集模型（如果指定）
+            model_type_str = 'classification_validation' if args.use_validation else 'classification'
+            model_types = [model_type_str]
             print("=" * 80)
-            print("ETF分类模型策略回测")
+            print(f"ETF分类模型策略回测 - {'使用验证集模型' if args.use_validation else '使用普通模型'}")
             print("=" * 80)
     else:
         if args.model_type == 'both':
@@ -1882,16 +1899,19 @@ def main():
         # 加载预测数据
         print("\n加载预测数据...")
         print(f"  回测起始日期: {backtest_start}")
-        # classification_cash_hedge 使用 classification 的数据
-        data_model_type = 'classification' if model_type.startswith('classification') else model_type
-        predictions_df = load_latest_predictions(DATA_DIR, backtest_start, data_model_type)
+        # classification_cash_hedge 使用 classification 或 classification_validation 的数据
+        if model_type.startswith('classification'):
+            data_model_type = 'classification_validation' if args.use_validation else 'classification'
+        else:
+            data_model_type = model_type
+        predictions_df = load_latest_predictions(DATA_DIR, backtest_start, data_model_type, use_validation=args.use_validation)
         print(f"  共加载 {len(predictions_df)} 条预测记录")
         print(f"  ETF数量: {predictions_df['code'].nunique()}")
 
         # 确定回测结束日期
         if len(predictions_df) > 0:
-            if model_type == 'classification' or model_type == 'classification_cash_hedge':
-                # 分类模型：使用上周最后一个交易日（周五）作为结束日期
+            if 'classification' in model_type:
+                # 分类模型（包括validation）：使用上周最后一个交易日（周五）作为结束日期
                 actual_end_date = get_last_trading_day_last_week()
                 print(f" 分类模型回测，使用上周最后一个交易日: {actual_end_date}")
             else:
@@ -1911,9 +1931,9 @@ def main():
         # 运行回测
         print("\n运行回测...")
 
-        if model_type == 'classification':
+        if model_type == 'classification' or model_type == 'classification_validation':
             # 标准分类模型回测（排除类别0）
-            strategy_name = 'CLASSIFICATION_TOP5_NO_CLASS_0'
+            strategy_name = f'CLASSIFICATION_TOP5_NO_CLASS_0_{"VALIDATION" if model_type == "classification_validation" else ""}'
             results_df = run_classification_backtest(
                 predictions_df=predictions_df,
                 db_path=DB_PATH,
@@ -1925,7 +1945,7 @@ def main():
                 strategy_name=strategy_name,
                 transaction_rate=BACKTEST_CONFIG['TRANSACTION_RATE']
             )
-        elif model_type == 'classification_cash_hedge':
+        elif model_type == 'classification_cash_hedge' or model_type == 'classification_validation_cash_hedge':
             # 带现金对冲的分类模型回测
             strategy_name = 'CLASSIFICATION_TOP5_CASH_HEDGE'
             results_df = run_classification_backtest_with_cash_hedge(
