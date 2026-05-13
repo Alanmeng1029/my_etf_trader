@@ -35,6 +35,9 @@ def run_command(cmd_parts, description):
     cmd_str = ' '.join(cmd_parts)
     print(f"执行: {cmd_str}")
     print("-" * 80)
+    env = os.environ.copy()
+    env.setdefault("PYTHONUTF8", "1")
+    env.setdefault("PYTHONIOENCODING", "utf-8")
 
     try:
         result = subprocess.run(
@@ -43,7 +46,9 @@ def run_command(cmd_parts, description):
             check=True,
             capture_output=True,
             text=True,
-            encoding='utf-8'
+            encoding='utf-8',
+            errors='replace',
+            env=env,
         )
         print(result.stdout)
         return True
@@ -280,7 +285,7 @@ def print_recommendations(recommendations: List[Dict], use_classification=False)
     print("=" * 80)
 
 
-def save_recommendations(recommendations: List[Dict], use_classification=False) -> None:
+def save_recommendations(recommendations: List[Dict], use_classification=False) -> Dict[str, str]:
     """保存推荐结果到文件"""
     os.makedirs(RECOMMENDATIONS_DIR, exist_ok=True)
 
@@ -336,6 +341,11 @@ def save_recommendations(recommendations: List[Dict], use_classification=False) 
     html_path = os.path.join(RECOMMENDATIONS_DIR, f"recommendations{mode_suffix}_{timestamp}.html")
     generate_html_report(recommendations, html_path, use_classification=use_classification)
     print(f"推荐HTML已保存: {html_path}")
+    return {
+        'txt': txt_path,
+        'csv': csv_path,
+        'html': html_path,
+    }
 
 
 def generate_html_report(recommendations: List[Dict], output_path: str, use_classification=False) -> None:

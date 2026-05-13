@@ -1,0 +1,110 @@
+name: Daily ETF Classification Recommendation
+
+on:
+  workflow_dispatch:
+    inputs:
+      threshold:
+        description: "Class 3 probability threshold"
+        required: false
+        default: "0.1"
+  schedule:
+    # 16:30 Asia/Shanghai, Monday to Friday. GitHub cron is UTC.
+    - cron: "30 8 * * 1-5"
+
+permissions:
+  contents: read
+
+jobs:
+  recommend:
+    name: Generate recommendation report
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      PYTHONUTF8: "1"
+      PYTHONPATH: src
+      RECOMMENDATION_THRESHOLD: ${{ github.event.inputs.threshold || '0.1' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e .
+
+      - name: Prepare ETF universe config
+        run: |
+          cp .env.example .env
+
+      - name: Generate daily classification recommendation
+        run: |
+          python -X utf8 -m my_etf.workflows.daily_recommendation --threshold "${RECOMMENDATION_THRESHOLD}"
+
+      - name: Publish run summary
+        if: always()
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          summary_file = Path(os.environ["GITHUB_STEP_SUMMARY"])
+          summaries = sorted(Path("recommendations").glob("daily_recommendation_summary_*.json"))
+
+          if not summaries:
+              summary_file.write_text(
+                  "## Daily ETF Classification Recommendation\n\n"
+                  "No summary file was generated. Do not use this run for trading decisions.\n",
+                  encoding="utf-8",
+              )
+              raise SystemExit(0)
+
+          latest = summaries[-1]
+          payload = json.loads(latest.read_text(encoding="utf-8"))
+          lines = [
+              "## Daily ETF Classification Recommendation",
+              "",
+              f"- actionable: {payload.get('actionable')}",
+              f"- message: {payload.get('message')}",
+              f"- data_reference_date: {payload.get('data_reference_date')}",
+              f"- data_age_days: {payload.get('data_age_days')}",
+              f"- eligible_count: {payload.get('eligible_count')}",
+              f"- excluded_count: {payload.get('excluded_count')}",
+              f"- summary_json: {latest.as_posix()}",
+              "",
+              "| rank | code | name | predicted_class | class_0_prob | class_1_prob | class_2_prob | class_3_prob |",
+              "| ---: | --- | --- | ---: | ---: | ---: | ---: | ---: |",
+          ]
+          recommendations = payload.get("recommendations") or []
+          if recommendations:
+              for rec in recommendations:
+                  lines.append(
+                      f"| {rec.get('rank')} | {rec.get('code')} | {rec.get('name')} | "
+                      f"{rec.get('predicted_class')} | {rec.get('class_0_prob')} | "
+                      f"{rec.get('class_1_prob')} | {rec.get('class_2_prob')} | "
+                      f"{rec.get('class_3_prob')} |"
+                  )
+          else:
+              lines.append("|  |  | 今日空仓/无推荐 |  |  |  |  |  |")
+
+          summary_file.write_text("\n".join(lines) + "\n", encoding="utf-8")
+          PY
+
+      - name: Upload recommendation artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: daily-etf-recommendation-${{ github.run_id }}
+          path: |
+            recommendations/**
+            data/universe_snapshot_daily_recommendation_*.json
+            logs/**
+          if-no-files-found: warn
+          retention-days: 30
