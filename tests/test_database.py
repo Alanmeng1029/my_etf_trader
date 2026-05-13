@@ -13,6 +13,7 @@ def test_db_path_exists():
 
 def test_get_connection():
     """测试数据库连接"""
+    from src.my_etf.config import DB_PATH
     from src.my_etf.utils.database import get_connection
 
     # 如果数据库文件存在，测试连接

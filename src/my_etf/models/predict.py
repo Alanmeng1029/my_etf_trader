@@ -9,10 +9,11 @@ import pandas as pd
 from typing import Dict, List
 
 from ..config import (
-    MODELS_DIR, FEATURE_COLS, ALL_FEATURE_COLS, DB_MIN_DATE,
+    MODELS_DIR, ALL_FEATURE_COLS, DB_MIN_DATE, BACKTEST_CONFIG,
     CLASSIFICATION_CONFIG
 )
 from ..utils.database import read_etf_data
+from ..utils.data_health import eligible_universe, write_universe_snapshot
 from ..utils.logger import setup_logger
 
 logger = setup_logger("etf_predict", "predict.log")
@@ -35,14 +36,30 @@ def load_latest_model_and_scaler(code: str, model_type: str = 'regression'):
     if not os.path.exists(model_dir):
         return None, None, None
 
-    # 查找指定类型的最新模型文件
-    suffix = '_classification' if model_type == 'classification' else ''
-    model_files = sorted([
+    # 查找指定类型的最新模型文件。回归预测只能加载普通回归模型，
+    # 不能把较新的分类/验证模型误当成回归模型。
+    all_model_files = [
         f for f in os.listdir(model_dir)
-        if f.endswith('.pkl')
-        and '_scaler.pkl' not in f
-        and f.endswith(f'{suffix}.pkl')
-    ])
+        if f.endswith('.pkl') and '_scaler.pkl' not in f
+    ]
+    if model_type == 'classification':
+        suffix = '_classification'
+        model_files = sorted([
+            f for f in all_model_files
+            if f.endswith('_classification.pkl')
+        ])
+    else:
+        suffix = ''
+        non_regression_markers = (
+            '_classification',
+            '_validation',
+            '_mixed',
+            '_ts_cv',
+        )
+        model_files = sorted([
+            f for f in all_model_files
+            if not any(marker in f for marker in non_regression_markers)
+        ])
 
     if not model_files:
         return None, None, None
@@ -68,7 +85,7 @@ def get_class_label_and_name(class_id: int):
     获取类别名称
 
     Args:
-        class_id: 类别ID (1, 2, 3, 4)
+        class_id: 类别ID (0, 1, 2, 3)
 
     Returns:
         tuple: (class_id, class_name)
@@ -101,15 +118,23 @@ def predict_classification(code: str, df: pd.DataFrame) -> Dict:
         return None
 
     # 标准化并预测
-    X_latest = latest_row.values.reshape(1, -1)
+    X_latest = latest_row.to_frame().T
     X_scaled = scaler.transform(X_latest)
 
     # 预测类别
     class_id = int(model.predict(X_scaled)[0])
 
-    # 获取概率分布
-    proba = model.predict_proba(X_scaled)[0]
-    confidence = float(proba[class_id - 1])  # class_id 是 1-4，数组索引是 0-3
+    # 获取概率分布。XGBoost 的 predict_proba 列顺序对应 model.classes_，
+    # 这里统一整理成 [class_0, class_1, class_2, class_3]，避免类别索引错位。
+    raw_proba = model.predict_proba(X_scaled)[0]
+    model_classes = getattr(model, 'classes_', np.arange(len(raw_proba)))
+    proba_by_class = {
+        int(cls): float(raw_proba[idx])
+        for idx, cls in enumerate(model_classes)
+    }
+    class_labels = CLASSIFICATION_CONFIG['labels']
+    proba = [proba_by_class.get(int(label), 0.0) for label in class_labels]
+    confidence = proba_by_class.get(class_id, 0.0)
 
     # 获取类别名称
     _, class_name = get_class_label_and_name(class_id)
@@ -119,19 +144,26 @@ def predict_classification(code: str, df: pd.DataFrame) -> Dict:
         'class_id': class_id,
         'class_name': class_name,
         'confidence': confidence,
-        'proba': proba.tolist(),
+        'proba': proba,
+        'class_probabilities': proba_by_class,
         'date': df.iloc[-1]['date'],
         'model_version': model_version,
         'model_type': 'classification'
     }
 
 
-def generate_daily_predictions(model_type: str = 'regression'):
+def generate_daily_predictions(
+    model_type: str = 'regression',
+    max_staleness_days: int = None,
+    save_universe_snapshot: bool = False,
+):
     """
     使用现有模型生成所有ETF的最新预测
 
     Args:
         model_type: 模型类型 ('regression' 或 'classification')
+        max_staleness_days: ETF最新数据相对全市场最新日期允许滞后的最大自然日数
+        save_universe_snapshot: 是否保存本次预测使用的ETF universe快照
 
     Returns:
         dict: 预测结果字典
@@ -139,19 +171,55 @@ def generate_daily_predictions(model_type: str = 'regression'):
             - 分类模型: {code: {'class_id': int, 'class_name': str, 'confidence': float, 'date': str, 'model_version': str}}
     """
     from ..config import get_etf_codes
-    codes = get_etf_codes()
+    requested_codes = get_etf_codes()
+    max_staleness_days = (
+        BACKTEST_CONFIG['MAX_STALENESS_DAYS']
+        if max_staleness_days is None else max_staleness_days
+    )
+    codes, health_df = eligible_universe(
+        requested_codes,
+        max_staleness_days=max_staleness_days,
+        min_history_days=BACKTEST_CONFIG['MIN_HISTORY_DAYS'],
+    )
+    if save_universe_snapshot:
+        path = write_universe_snapshot(health_df, f'predict_{model_type}')
+        logger.info(f"Universe快照已保存: {path}")
+    if health_df is not None and not health_df.empty:
+        excluded_count = int((~health_df['is_eligible']).sum())
+        if excluded_count:
+            logger.info(f"预测前剔除 {excluded_count} 个ETF: 数据不足/过期/非正式表/缺失特征")
     predictions = {}
 
     logger.info(f"使用现有{model_type}模型生成预测...")
+
+    data_cache = {}
+    latest_dates = {}
+    for code in codes:
+        df = read_etf_data(code, min_date=DB_MIN_DATE, use_advanced=True)
+        data_cache[code] = df
+        if not df.empty and 'date' in df.columns:
+            latest_dates[code] = pd.to_datetime(df.iloc[-1]['date'])
+
+    reference_date = max(latest_dates.values()) if latest_dates else None
 
     for code in codes:
         logger.info(f"\n处理 {code}...")
 
         # 加载数据（包含高级指标）
-        df = read_etf_data(code, min_date=DB_MIN_DATE, use_advanced=True)
+        df = data_cache.get(code, pd.DataFrame())
         if df.empty or len(df) < 60:
             logger.info(f"  跳过: 数据不足")
             continue
+
+        latest_date = latest_dates.get(code)
+        if reference_date is not None and latest_date is not None:
+            staleness_days = (reference_date - latest_date).days
+            if staleness_days > max_staleness_days:
+                logger.info(
+                    f"  跳过: 最新数据过旧 ({latest_date.date()}, "
+                    f"滞后{staleness_days}天)"
+                )
+                continue
 
         if model_type == 'classification':
             # 使用分类模型预测
@@ -178,7 +246,7 @@ def generate_daily_predictions(model_type: str = 'regression'):
                 continue
 
             # 标准化并预测
-            X_latest = latest_row.values.reshape(1, -1)
+            X_latest = latest_row.to_frame().T
             X_scaled = scaler.transform(X_latest)
             predicted_return = model.predict(X_scaled)[0]
 

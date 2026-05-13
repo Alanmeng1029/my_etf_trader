@@ -17,6 +17,8 @@ from pathlib import Path
 from ..config import DATA_DIR, REPORTS_DIR, BACKTEST_CONFIG, STRATEGY_CONFIGS
 from ..utils.logger import setup_logger
 from ..utils.database import get_etf_price, get_connection
+from ..utils.data_health import eligible_universe, write_universe_snapshot
+from .engine import run_portfolio_backtest, calculate_enhanced_metrics
 
 # -*- coding: utf-8 -*-
 """
@@ -37,6 +39,8 @@ from pathlib import Path
 from ..config import DATA_DIR, REPORTS_DIR, BACKTEST_CONFIG, STRATEGY_CONFIGS
 from ..utils.logger import setup_logger
 from ..utils.database import get_etf_price, get_connection
+from ..utils.data_health import eligible_universe, write_universe_snapshot
+from .engine import run_portfolio_backtest, calculate_enhanced_metrics
 def get_last_trading_day_last_week() -> str:
     """
     获取上周最后一个交易日（周五）
@@ -94,9 +98,21 @@ def load_latest_predictions(data_dir: str = DATA_DIR,
     """
     all_predictions = []
     excluded_etfs = []
+    eligible_codes, health_df = eligible_universe(
+        max_staleness_days=BACKTEST_CONFIG.get('MAX_STALENESS_DAYS', 10),
+        min_history_days=BACKTEST_CONFIG.get('MIN_HISTORY_DAYS', 252),
+    )
+    eligible_code_set = set(eligible_codes)
+    if not health_df.empty:
+        snapshot_path = write_universe_snapshot(health_df, f'backtest_{model_type}', data_dir)
+        logger.info(f"  Universe snapshot: {snapshot_path}")
 
     for etf_dir in Path(data_dir).iterdir():
         if etf_dir.is_dir() and etf_dir.name not in ['summary', 'reports']:
+            if etf_dir.name not in eligible_code_set:
+                excluded_etfs.append(etf_dir.name)
+                logger.info(f"  Exclude {etf_dir.name}: data_health_universe")
+                continue
             # 根据模型类型选择文件
             if model_type == 'separate':
                 csv_files = sorted(etf_dir.glob(f"{etf_dir.name}_{etf_dir.name}_*_separate.csv"))
@@ -1831,6 +1847,122 @@ def check_data_completeness(predictions_df: pd.DataFrame,
 
     print("DEBUG: check_data_completeness returning:", overall_latest_str)
     return overall_latest_str
+
+
+def run_backtest(predictions_df: pd.DataFrame,
+                db_path: str,
+                backtest_start_date: str = '2025-01-01',
+                top_n: int = 5,
+                rebalance_days: int = 5,
+                initial_capital: float = 100000,
+                strategy_name: str = 'TOP5',
+                transaction_rate: float = 0.0003) -> pd.DataFrame:
+    """Compatibility adapter for the unified realistic backtest engine."""
+    return run_portfolio_backtest(
+        predictions_df=predictions_df,
+        strategy_kind='regression',
+        backtest_start_date=backtest_start_date,
+        top_n=top_n,
+        rebalance_days=rebalance_days,
+        initial_capital=initial_capital,
+        strategy_name=strategy_name,
+        commission_rate=BACKTEST_CONFIG.get('COMMISSION_RATE', transaction_rate),
+        slippage_bps=BACKTEST_CONFIG.get('SLIPPAGE_BPS', 5),
+        min_trade_amount=BACKTEST_CONFIG.get('MIN_TRADE_AMOUNT', 1000),
+        max_position_weight=BACKTEST_CONFIG.get('MAX_POSITION_WEIGHT', 0.30),
+    )
+
+
+def run_classification_backtest(predictions_df: pd.DataFrame,
+                                db_path: str,
+                                backtest_start_date: str = '2025-01-01',
+                                backtest_end_date: str = None,
+                                top_n: int = 5,
+                                rebalance_days: int = 5,
+                                initial_capital: float = 100000,
+                                strategy_name: str = 'CLASSIFICATION_TOP5_NO_CLASS_0',
+                                transaction_rate: float = 0.0003) -> pd.DataFrame:
+    """Compatibility adapter for classification strategy with class-0 exclusion."""
+    return run_portfolio_backtest(
+        predictions_df=predictions_df,
+        strategy_kind='classification',
+        backtest_start_date=backtest_start_date,
+        backtest_end_date=backtest_end_date,
+        top_n=top_n,
+        rebalance_days=rebalance_days,
+        initial_capital=initial_capital,
+        strategy_name=strategy_name,
+        commission_rate=BACKTEST_CONFIG.get('COMMISSION_RATE', transaction_rate),
+        slippage_bps=BACKTEST_CONFIG.get('SLIPPAGE_BPS', 5),
+        min_trade_amount=BACKTEST_CONFIG.get('MIN_TRADE_AMOUNT', 1000),
+        max_position_weight=BACKTEST_CONFIG.get('MAX_POSITION_WEIGHT', 0.30),
+        classification_prob_threshold=BACKTEST_CONFIG.get('CLASSIFICATION_PROB_THRESHOLD', 0.10),
+    )
+
+
+def run_classification_backtest_with_cash_hedge(predictions_df: pd.DataFrame,
+                                                db_path: str,
+                                                backtest_start_date: str = '2025-01-01',
+                                                backtest_end_date: str = None,
+                                                top_n: int = 5,
+                                                rebalance_days: int = 5,
+                                                initial_capital: float = 100000,
+                                                strategy_name: str = 'CLASSIFICATION_TOP5_CASH_HEDGE',
+                                                transaction_rate: float = 0.0003,
+                                                hedge_etf_code: str = '510500') -> pd.DataFrame:
+    """Compatibility adapter for classification strategy with cash hedge."""
+    return run_portfolio_backtest(
+        predictions_df=predictions_df,
+        strategy_kind='classification_cash_hedge',
+        backtest_start_date=backtest_start_date,
+        backtest_end_date=backtest_end_date,
+        top_n=top_n,
+        rebalance_days=rebalance_days,
+        initial_capital=initial_capital,
+        strategy_name=strategy_name,
+        commission_rate=BACKTEST_CONFIG.get('COMMISSION_RATE', transaction_rate),
+        slippage_bps=BACKTEST_CONFIG.get('SLIPPAGE_BPS', 5),
+        min_trade_amount=BACKTEST_CONFIG.get('MIN_TRADE_AMOUNT', 1000),
+        max_position_weight=BACKTEST_CONFIG.get('MAX_POSITION_WEIGHT', 0.30),
+        classification_prob_threshold=BACKTEST_CONFIG.get('CLASSIFICATION_PROB_THRESHOLD', 0.10),
+        hedge_etf_code=hedge_etf_code,
+    )
+
+
+def calculate_metrics(results_df: pd.DataFrame, initial_capital: float) -> dict:
+    """Compatibility adapter returning enhanced metrics."""
+    return calculate_enhanced_metrics(results_df, initial_capital)
+
+
+def generate_strategy_comparison_summary(all_results: list, output_path: str) -> None:
+    """Generate strategy comparison CSV with trading-cost and stability metrics."""
+    summary_rows = []
+    for result in all_results:
+        metrics = result['metrics']
+        summary_rows.append({
+            'Strategy': result['strategy_name'],
+            'Model Type': metrics.get('model_type', ''),
+            'Total Return (%)': metrics.get('total_return'),
+            'Final Value': metrics.get('final_value'),
+            'Max Drawdown (%)': metrics.get('max_drawdown'),
+            'Annualized Return (%)': metrics.get('annualized_return'),
+            'Sharpe Ratio': metrics.get('sharpe_ratio'),
+            'Sortino Ratio': metrics.get('sortino_ratio'),
+            'Calmar Ratio': metrics.get('calmar_ratio'),
+            'Win Rate (%)': metrics.get('win_rate'),
+            'Rebalance Count': metrics.get('total_trades'),
+            'Turnover': metrics.get('turnover'),
+            'Transaction Cost': metrics.get('total_transaction_cost'),
+            'Cost To Profit (%)': metrics.get('cost_to_profit_pct'),
+            'Avg Position Count': metrics.get('average_position_count'),
+            'Cash Days': metrics.get('cash_days'),
+            'Execution Fallback Count': metrics.get('execution_fallback_count'),
+            'Benchmark': metrics.get('benchmark'),
+        })
+
+    summary_df = pd.DataFrame(summary_rows)
+    summary_df.to_csv(output_path, index=False)
+    logger.info(f"绛栫暐瀵规瘮鎽樿宸蹭繚瀛? {output_path}")
 
 
 def main():

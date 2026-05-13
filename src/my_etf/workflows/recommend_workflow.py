@@ -96,7 +96,7 @@ def generate_daily_predictions():
         dict: {code: predicted_return}
     """
     from ..models.predict import generate_daily_predictions
-    return generate_daily_predictions()
+    return generate_daily_predictions(save_universe_snapshot=True)
 
 
 def generate_classification_predictions():
@@ -110,7 +110,10 @@ def generate_classification_predictions():
         from ..models.predict import generate_daily_predictions
 
         # 使用实时预测
-        raw_predictions = generate_daily_predictions(model_type='classification')
+        raw_predictions = generate_daily_predictions(
+            model_type='classification',
+            save_universe_snapshot=True,
+        )
 
         if not raw_predictions:
             print("错误: 无法生成分类预测，请确保已训练分类模型")
@@ -118,22 +121,23 @@ def generate_classification_predictions():
 
         predictions = {}
         for code, pred in raw_predictions.items():
-            # class_id 是 1-4，proba 是 [class_1_prob, class_2_prob, class_3_prob, class_4_prob]
+            # class_id 是 0-3，proba 是 [class_0_prob, class_1_prob, class_2_prob, class_3_prob]
             class_id = pred['class_id']
-            proba = pred['proba']
+            proba = list(pred['proba'])
 
-            # 确保有4个概率值（类别1-4）
+            # 确保有4个概率值（类别0-3）
             while len(proba) < 4:
                 proba.append(0.0)
 
-            # 找到class_4的概率（大幅上涨）
+            # 类别3是大幅上涨。保留 class_4_prob 字段名以兼容旧报表/回测CSV。
             class_4_prob = proba[3] if len(proba) > 3 else 0.0
 
             predictions[code] = {
                 'predicted_class': class_id,
-                'class_probs': proba,  # [class_1_prob, class_2_prob, class_3_prob, class_4_prob]
+                'class_probs': proba,  # [class_0_prob, class_1_prob, class_2_prob, class_3_prob]
                 'class_4_prob': class_4_prob,
-                'date': pred['date']
+                'date': pred['date'],
+                'model_version': pred.get('model_version'),
             }
 
         return predictions
@@ -200,9 +204,15 @@ def get_threshold_based_recommendations(predictions: dict, min_prob_threshold=0.
         print("错误: 没有找到任何预测数据")
         return []
 
+    # 与分类回测保持一致：先排除类别0（大幅下跌），再按大幅上涨概率排序和筛选。
+    eligible_predictions = [
+        (code, pred) for code, pred in predictions.items()
+        if pred.get('predicted_class') != 0
+    ]
+
     # 转换为列表并按class_4_prob降序排序
     sorted_predictions = sorted(
-        predictions.items(),
+        eligible_predictions,
         key=lambda x: x[1].get('class_4_prob', 0),
         reverse=True
     )
@@ -231,7 +241,12 @@ def get_threshold_based_recommendations(predictions: dict, min_prob_threshold=0.
             'name': etf_names.get(code, code),
             'class_4_prob': pred.get('class_4_prob', 0),
             'predicted_class': pred.get('predicted_class', 0),
-            'prediction_date': pred['date']
+            'class_0_prob': pred.get('class_probs', [0, 0, 0, 0])[0],
+            'class_1_prob': pred.get('class_probs', [0, 0, 0, 0])[1],
+            'class_2_prob': pred.get('class_probs', [0, 0, 0, 0])[2],
+            'class_3_prob': pred.get('class_probs', [0, 0, 0, 0])[3],
+            'prediction_date': pred['date'],
+            'model_version': pred.get('model_version'),
         })
 
     return recommendations
@@ -243,12 +258,14 @@ def print_recommendations(recommendations: List[Dict], use_classification=False)
     if use_classification:
         print(f"ETF推荐结果 (基于概率阈值，共{len(recommendations)}只)")
         print("=" * 80)
-        print("\n排名 | 代码    | 名称          | 大幅上涨概率 | 预测类别 | 预测日期")
+        print("\n排名 | 代码    | 名称          | P0/P1/P2/P3                     | 预测类别 | 预测日期")
         print("-" * 80)
 
         for rec in recommendations:
             print(f"  {rec['rank']:>2}  | {rec['code']:>6}  | {rec['name']:<12} | "
-                  f"{rec['class_4_prob']*100:>6.2f}%      | {rec['predicted_class']:>8}  | {rec['prediction_date']}")
+                  f"{rec['class_0_prob']*100:>5.1f}/{rec['class_1_prob']*100:>5.1f}/"
+                  f"{rec['class_2_prob']*100:>5.1f}/{rec['class_3_prob']*100:>5.1f}% | "
+                  f"{rec['predicted_class']:>8}  | {rec['prediction_date']}")
     else:
         print("ETF推荐结果 (TOP5)")
         print("=" * 80)
@@ -283,7 +300,15 @@ def save_recommendations(recommendations: List[Dict], use_classification=False) 
 
         for rec in recommendations:
             if use_classification:
-                f.write(f"{rec['rank']}. {rec['code']} ({rec['name']}) - 大幅上涨概率: {rec['class_4_prob']*100:.2f}%, 预测类别: {rec['predicted_class']}\n")
+                f.write(
+                    f"{rec['rank']}. {rec['code']} ({rec['name']}) - "
+                    f"class0: {rec['class_0_prob']*100:.2f}%, "
+                    f"class1: {rec['class_1_prob']*100:.2f}%, "
+                    f"class2: {rec['class_2_prob']*100:.2f}%, "
+                    f"class3: {rec['class_3_prob']*100:.2f}%, "
+                    f"预测类别: {rec['predicted_class']}, "
+                    f"模型版本: {rec.get('model_version', '')}\n"
+                )
             else:
                 f.write(f"{rec['rank']}. {rec['code']} ({rec['name']}) - 预测收益率: {rec['predicted_return']:.2f}%\n")
 
@@ -294,7 +319,15 @@ def save_recommendations(recommendations: List[Dict], use_classification=False) 
     csv_path = os.path.join(RECOMMENDATIONS_DIR, f"recommendations{mode_suffix}_{timestamp}.csv")
     df = pd.DataFrame(recommendations)
     if use_classification:
-        df.to_csv(csv_path, index=False, columns=['rank', 'code', 'name', 'class_4_prob', 'predicted_class', 'prediction_date'])
+        df.to_csv(
+            csv_path,
+            index=False,
+            columns=[
+                'rank', 'code', 'name', 'predicted_class',
+                'class_0_prob', 'class_1_prob', 'class_2_prob', 'class_3_prob',
+                'class_4_prob', 'prediction_date', 'model_version'
+            ],
+        )
     else:
         df.to_csv(csv_path, index=False, columns=['rank', 'code', 'name', 'predicted_return', 'prediction_date'])
     print(f"推荐CSV已保存: {csv_path}")
@@ -405,8 +438,15 @@ def generate_html_report(recommendations: List[Dict], output_path: str, use_clas
     for rec in recommendations:
         if use_classification:
             return_value = f"{rec['class_4_prob']*100:.2f}%"
+            probability_line = (
+                f"P0 {rec['class_0_prob']*100:.2f}% / "
+                f"P1 {rec['class_1_prob']*100:.2f}% / "
+                f"P2 {rec['class_2_prob']*100:.2f}% / "
+                f"P3 {rec['class_3_prob']*100:.2f}%"
+            )
         else:
             return_value = f"{rec['predicted_return']:.2f}%"
+            probability_line = ""
 
         html_content += f"""
             <div class="recommendation-card">
@@ -414,6 +454,7 @@ def generate_html_report(recommendations: List[Dict], output_path: str, use_clas
                 <div class="info">
                     <div class="code">{rec['code']}</div>
                     <div class="name">{rec['name']}</div>
+                    <div class="name">{probability_line}</div>
                 </div>
                 <div class="return">{return_value}</div>
             </div>

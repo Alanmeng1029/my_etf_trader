@@ -15,7 +15,7 @@ def create_sample_data():
         '最高': 100 + np.random.randn(100).cumsum() + 1,
         '最低': 100 + np.random.randn(100).cumsum() - 1,
         '成交量': np.random.randint(1000000, 10000000, 100),
-        '成交额': np.random.randint(1000000000, 10000000000, 100),
+        '成交额': np.random.randint(1000000000, 10000000000, 100, dtype=np.int64),
     })
     return data
 

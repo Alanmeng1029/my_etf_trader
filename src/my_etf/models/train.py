@@ -16,7 +16,7 @@ import numpy as np
 import pandas as pd
 import xgboost as xgb
 import joblib
-from sklearn.metrics import r2_score, mean_absolute_error, mean_squared_error
+from sklearn.metrics import r2_score, mean_absolute_error, mean_squared_error, log_loss
 from sklearn.preprocessing import StandardScaler
 
 # 强制重新导入database模块（避免缓存问题）
@@ -29,7 +29,8 @@ if 'my_etf.utils' in sys.modules:
 from ..config import (
     MODELS_DIR, DATA_DIR, MODEL_PARAMS, FEATURE_COLS,
     ALL_FEATURE_COLS, BENCHMARK_ETF, DB_MIN_DATE, MODEL_ARCHITECTURE,
-    CLASSIFICATION_TARGET, CLASSIFICATION_CONFIG, CLASSIFICATION_MODEL_PARAMS
+    CLASSIFICATION_TARGET, CLASSIFICATION_CONFIG, CLASSIFICATION_MODEL_PARAMS,
+    BACKTEST_CONFIG
 )
 from ..utils.database import read_etf_data
 from ..utils.logger import setup_logger
@@ -207,6 +208,92 @@ def split_data(df: pd.DataFrame, train_ratio: float = 0.7) -> Tuple[pd.DataFrame
     return train_df, test_df
 
 
+def create_walk_forward_splits(
+    df: pd.DataFrame,
+    train_days: Optional[int] = None,
+    validation_days: Optional[int] = None,
+    step_days: Optional[int] = None,
+    embargo_days: Optional[int] = None,
+) -> List[Dict]:
+    """Create rolling train/validation windows with an embargo gap."""
+    train_days = train_days or BACKTEST_CONFIG['WALK_FORWARD_TRAIN_DAYS']
+    validation_days = validation_days or BACKTEST_CONFIG['WALK_FORWARD_VALIDATION_DAYS']
+    step_days = step_days or BACKTEST_CONFIG['WALK_FORWARD_STEP_DAYS']
+    embargo_days = embargo_days or BACKTEST_CONFIG['EMBARGO_DAYS']
+
+    ordered = df.sort_values('date').reset_index(drop=True).copy() if 'date' in df.columns else df.reset_index(drop=True).copy()
+    splits = []
+    start = 0
+    fold = 1
+    while True:
+        train_start = start
+        train_end = train_start + train_days
+        validation_start = train_end + embargo_days
+        validation_end = validation_start + validation_days
+        if validation_end > len(ordered):
+            break
+
+        train_df = ordered.iloc[train_start:train_end].copy()
+        validation_df = ordered.iloc[validation_start:validation_end].copy()
+        splits.append({
+            'fold': fold,
+            'train_start_date': train_df['date'].iloc[0] if 'date' in train_df.columns else train_start,
+            'train_end_date': train_df['date'].iloc[-1] if 'date' in train_df.columns else train_end - 1,
+            'validation_start_date': validation_df['date'].iloc[0] if 'date' in validation_df.columns else validation_start,
+            'validation_end_date': validation_df['date'].iloc[-1] if 'date' in validation_df.columns else validation_end - 1,
+            'embargo_days': embargo_days,
+            'train_df': train_df,
+            'validation_df': validation_df,
+        })
+        fold += 1
+        start += step_days
+
+    return splits
+
+
+def evaluate_classification_calibration(
+    y_true: pd.Series,
+    probabilities: np.ndarray,
+    labels: Tuple[int, ...] = (0, 1, 2, 3),
+    bins: int = 5,
+) -> Dict:
+    """Evaluate classification probability calibration and class balance."""
+    y = pd.Series(y_true).astype(int).reset_index(drop=True)
+    proba = np.asarray(probabilities)
+    if proba.ndim != 2 or proba.shape[0] != len(y):
+        return {}
+
+    one_hot = np.zeros((len(y), len(labels)))
+    label_to_idx = {label: idx for idx, label in enumerate(labels)}
+    for row_idx, label in enumerate(y):
+        if label in label_to_idx:
+            one_hot[row_idx, label_to_idx[label]] = 1
+
+    clipped = np.clip(proba, 1e-12, 1 - 1e-12)
+    metrics = {
+        'logloss': float(log_loss(y, clipped, labels=list(labels))),
+        'brier_score': float(np.mean(np.sum((clipped - one_hot) ** 2, axis=1))),
+        'class_distribution': {str(label): int((y == label).sum()) for label in labels},
+        'probability_bins': [],
+    }
+
+    class3_idx = label_to_idx.get(3, len(labels) - 1)
+    class3_proba = clipped[:, class3_idx]
+    edges = np.linspace(0, 1, bins + 1)
+    for left, right in zip(edges[:-1], edges[1:]):
+        mask = (class3_proba >= left) & (class3_proba < right if right < 1 else class3_proba <= right)
+        count = int(mask.sum())
+        hit_rate = float((y[mask] == 3).mean()) if count else None
+        metrics['probability_bins'].append({
+            'left': round(float(left), 4),
+            'right': round(float(right), 4),
+            'count': count,
+            'class3_hit_rate': hit_rate,
+        })
+
+    return metrics
+
+
 # ============================================================================
 # 模型架构：每ETF单独训练
 # ============================================================================
@@ -374,7 +461,8 @@ def train_single_model(code: str,
 
 
 def save_model(code: str, model, scaler, model_version: str,
-              target_col: str, feature_cols: List[str], model_type: str = 'regression'):
+              target_col: str, feature_cols: List[str], model_type: str = 'regression',
+              extra_metadata: Optional[Dict] = None):
     """
     保存模型、标准化器和元数据
 
@@ -409,10 +497,19 @@ def save_model(code: str, model, scaler, model_version: str,
         'model_type': model_type,
         'target': target_col,
         'features': feature_cols,
+        'feature_count': len(feature_cols),
         'params': MODEL_PARAMS if model_type == 'regression' else CLASSIFICATION_MODEL_PARAMS,
         'train_date': datetime.now().isoformat(),
+        'train_cutoff_date': extra_metadata.get('train_cutoff_date') if extra_metadata else None,
+        'validation_periods': extra_metadata.get('validation_periods', []) if extra_metadata else [],
+        'etf_universe': extra_metadata.get('etf_universe', [code]) if extra_metadata else [code],
+        'data_version': extra_metadata.get('data_version', datetime.now().strftime('%Y%m%d')) if extra_metadata else datetime.now().strftime('%Y%m%d'),
+        'indicator_version': extra_metadata.get('indicator_version', 'basic+advanced') if extra_metadata else 'basic+advanced',
+        'python_version': sys.version,
         'has_scaler': scaler is not None
     }
+    if extra_metadata:
+        metadata.update(extra_metadata)
     metadata_path = os.path.join(model_dir, 'metadata.json')
     with open(metadata_path, 'w', encoding='utf-8') as f:
         json.dump(metadata, f, indent=2, ensure_ascii=False)
@@ -467,18 +564,44 @@ def train_single_classification_model(code: str,
 
     # 评估
     y_pred = model.predict(X_test_scaled)
+    raw_proba = model.predict_proba(X_test_scaled)
+    aligned_proba = np.zeros((len(y_test), 4))
+    for idx, cls in enumerate(getattr(model, 'classes_', [])):
+        if int(cls) in (0, 1, 2, 3):
+            aligned_proba[:, int(cls)] = raw_proba[:, idx]
+    calibration_metrics = evaluate_classification_calibration(y_test, aligned_proba)
     metrics = {
         'accuracy': accuracy_score(y_test, y_pred),
         'precision_macro': precision_score(y_test, y_pred, average='macro', zero_division=0),
         'recall_macro': recall_score(y_test, y_pred, average='macro', zero_division=0),
         'f1_macro': f1_score(y_test, y_pred, average='macro', zero_division=0),
+        'logloss': calibration_metrics.get('logloss'),
+        'brier_score': calibration_metrics.get('brier_score'),
+        'class_distribution': calibration_metrics.get('class_distribution', {}),
+        'probability_bins': calibration_metrics.get('probability_bins', []),
     }
 
     logger.info(f"  分类模型评估: Accuracy={metrics['accuracy']:.4f}, F1={metrics['f1_macro']:.4f}")
 
     # 保存模型
     model_version = datetime.now().strftime('%Y%m%d_%H%M%S')
-    save_model(code, model, scaler, model_version, CLASSIFICATION_TARGET, feature_cols, model_type='classification')
+    save_model(
+        code,
+        model,
+        scaler,
+        model_version,
+        CLASSIFICATION_TARGET,
+        feature_cols,
+        model_type='classification',
+        extra_metadata={
+            'train_cutoff_date': train_df['date'].max() if 'date' in train_df.columns else None,
+            'validation_periods': [{
+                'start': test_df['date'].min() if 'date' in test_df.columns else None,
+                'end': test_df['date'].max() if 'date' in test_df.columns else None,
+            }],
+            'classification_calibration': calibration_metrics,
+        },
+    )
 
     return {
         'code': code,
@@ -489,6 +612,9 @@ def train_single_classification_model(code: str,
         'precision_macro': metrics['precision_macro'],
         'recall_macro': metrics['recall_macro'],
         'f1_macro': metrics['f1_macro'],
+        'logloss': metrics['logloss'],
+        'brier_score': metrics['brier_score'],
+        'class_distribution': metrics['class_distribution'],
         'train_size': len(X_train),
         'test_size': len(X_test),
         'model': model,

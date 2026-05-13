@@ -81,10 +81,14 @@ my_etf/
 
 ## 快速开始
 
+### Python 解释器
+
+Codex 和本地命令优先使用 `D:\Anaconda3\python.exe`。项目要求 Python `>=3.9`，不要使用旧的 Anaconda Python 3.6 环境。
+
 ### 1. 安装依赖
 
 ```bash
-pip install -r requirements.txt
+D:\Anaconda3\python.exe -m pip install -r requirements.txt
 ```
 
 ### 2. 配置环境变量

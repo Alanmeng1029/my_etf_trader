@@ -23,7 +23,7 @@ def test_feature_cols():
     assert isinstance(FEATURE_COLS, list)
     assert 'close' in FEATURE_COLS
     assert 'MA5' in FEATURE_COLS
-    assert len(FEATURE_COLS) == 18
+    assert len(FEATURE_COLS) == 20
 
 
 def test_model_params():

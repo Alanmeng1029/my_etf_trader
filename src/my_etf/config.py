@@ -18,6 +18,7 @@ REPORTS_DIR = os.path.join(SCRIPT_DIR, 'reports')
 RECOMMENDATIONS_DIR = os.path.join(SCRIPT_DIR, 'recommendations')
 DB_PATH = os.path.join(DATA_DIR, 'etf_data.db')
 ETF_NAMES_FILE = os.path.join(REPORTS_DIR, 'etf_names.json')
+CYCLICAL_ETF_FILE = os.path.join(REPORTS_DIR, 'cyclical_etf_candidates.json')
 
 
 def get_etf_codes() -> List[str]:
@@ -38,6 +39,51 @@ def get_etf_codes() -> List[str]:
 
     # 默认ETF列表
     return ["510050", "159915", "510300", "510500", "159901"]
+
+
+def get_cyclical_etf_codes() -> List[str]:
+    """
+    从 cyclical_etf_candidates.json 加载所有周期性ETF代码
+
+    Returns:
+        List[str]: 所有周期性ETF的代码列表（从所有tier中提取）
+
+    Note:
+        如果文件不存在或格式错误，返回空列表
+        该函数是可选的，主ETF列表仍由环境变量ETF_LIST控制
+    """
+    import json
+    from pathlib import Path
+    from my_etf.utils.logger import setup_logger
+
+    try:
+        cyclical_file = Path(CYCLICAL_ETF_FILE)
+        if not cyclical_file.exists():
+            logger = setup_logger("config", "config.log")
+            logger.warning(f"周期性ETF配置文件不存在: {CYCLICAL_ETF_FILE}")
+            return []
+
+        with open(cyclical_file, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+
+        # 从所有tier中提取ETF代码
+        codes = []
+        for tier_key in ['tier_1', 'tier_2', 'tier_3']:
+            if tier_key in data and 'etfs' in data[tier_key]:
+                codes.extend(data[tier_key]['etfs'].keys())
+
+        logger = setup_logger("config", "config.log")
+        logger.info(f"从周期性ETF配置文件加载 {len(codes)} 个ETF代码")
+        return codes
+
+    except json.JSONDecodeError as e:
+        logger = setup_logger("config", "config.log")
+        logger.error(f"周期性ETF配置文件格式错误: {e}")
+        return []
+    except Exception as e:
+        logger = setup_logger("config", "config.log")
+        logger.error(f"加载周期性ETF配置失败: {e}")
+        return []
 
 
 # 特征列（与训练时保持一致）
@@ -117,6 +163,18 @@ BACKTEST_CONFIG = {
     'REBALANCE_DAYS': 5,
     'TRANSACTION_RATE': 0.0003,
     'BACKTEST_START_DATE': '2025-01-01',
+    'MAX_STALENESS_DAYS': 10,
+    'MIN_HISTORY_DAYS': 252,
+    'COMMISSION_RATE': 0.0003,
+    'SLIPPAGE_BPS': 5,
+    'MIN_TRADE_AMOUNT': 1000,
+    'MAX_POSITION_WEIGHT': 0.30,
+    'CLASSIFICATION_PROB_THRESHOLD': 0.10,
+    'TRADE_EXECUTION': 'next_open',
+    'WALK_FORWARD_TRAIN_DAYS': 756,
+    'WALK_FORWARD_VALIDATION_DAYS': 63,
+    'WALK_FORWARD_STEP_DAYS': 21,
+    'EMBARGO_DAYS': 5,
 }
 
 # 策略配置（选择不同数量的ETF）

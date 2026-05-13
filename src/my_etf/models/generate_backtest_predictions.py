@@ -20,6 +20,22 @@ from ..utils.logger import setup_logger
 logger = setup_logger("backtest_predictions", "backtest_predictions.log")
 
 
+def find_regression_model_files(model_dir: str) -> List[str]:
+    """查找普通回归模型，排除分类、验证和调参模型文件。"""
+    non_regression_markers = (
+        '_classification',
+        '_validation',
+        '_mixed',
+        '_ts_cv',
+    )
+    return sorted([
+        f for f in os.listdir(model_dir)
+        if f.endswith('.pkl')
+        and '_scaler.pkl' not in f
+        and not any(marker in f for marker in non_regression_markers)
+    ])
+
+
 def create_target(df: pd.DataFrame, days: int = 5) -> pd.DataFrame:
     """创建预测目标（绝对收益）"""
     df = df.copy()
@@ -102,7 +118,7 @@ def generate_separate_predictions(codes: List[str],
             logger.warning(f"  未找到模型目录，跳过")
             continue
 
-        model_files = sorted([f for f in os.listdir(model_dir) if f.endswith('.pkl') and '_scaler.pkl' not in f])
+        model_files = find_regression_model_files(model_dir)
         if not model_files:
             logger.warning(f"  未找到模型文件，跳过")
             continue
@@ -119,7 +135,7 @@ def generate_separate_predictions(codes: List[str],
             scaler = joblib.load(scaler_path)
 
             # 对测试集进行预测
-            X_test = test_df[feature_cols].values
+            X_test = test_df[feature_cols]
             y_test = test_df['week_return'].values
 
             # 标准化
@@ -284,7 +300,7 @@ def generate_unified_predictions(codes: List[str],
         logger.error("未找到统一模型目录")
         return {}
 
-    model_files = sorted([f for f in os.listdir(model_dir) if f.endswith('.pkl') and '_scaler.pkl' not in f])
+    model_files = find_regression_model_files(model_dir)
     if not model_files:
         logger.error("未找到统一模型文件")
         return {}
@@ -304,7 +320,7 @@ def generate_unified_predictions(codes: List[str],
         extended_features = feature_cols + ['etf_code_encoded']
 
         # 对测试集进行预测
-        X_test = test_df[extended_features].values
+        X_test = test_df[extended_features]
         y_test = test_df['excess_return'].values
 
         # 标准化
@@ -433,7 +449,7 @@ def generate_classification_predictions(codes: List[str],
             scaler = joblib.load(scaler_path)
 
             # 对测试集进行预测
-            X_test = test_df[feature_cols].values
+            X_test = test_df[feature_cols]
             y_test = test_df['week_return'].values
 
             # 标准化
